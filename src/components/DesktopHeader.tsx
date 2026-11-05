@@ -14,7 +14,9 @@ import {
   Globe,
   Wifi,
   WifiOff,
-  RefreshCw
+  RefreshCw,
+  User,
+  LogOut
 } from 'lucide-react';
 
 export const DesktopHeader: React.FC = () => {
@@ -34,7 +36,9 @@ export const DesktopHeader: React.FC = () => {
     isOnline,
     isSyncing,
     syncQueue,
-    setIsSyncCenterOpen
+    setIsSyncCenterOpen,
+    currentUser,
+    logoutUser
   } = useApp();
 
   const [currentTime, setCurrentTime] = useState<string>('');
@@ -252,6 +256,26 @@ export const DesktopHeader: React.FC = () => {
         >
           <HelpCircle className="w-4 h-4" />
         </button>
+
+        {/* Current Cashier / Staff IAM Badge */}
+        {currentUser && (
+          <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
+            <div className="w-6 h-6 rounded-full bg-emerald-950 border border-emerald-700/60 flex items-center justify-center text-emerald-300 text-[10px] font-bold">
+              {currentUser.name.slice(0, 2).toUpperCase()}
+            </div>
+            <div className="hidden md:flex flex-col text-left leading-tight">
+              <span className="text-[11px] font-semibold text-slate-200">{currentUser.name}</span>
+              <span className="text-[9px] text-emerald-400 uppercase font-mono">{currentUser.role}</span>
+            </div>
+            <button
+              onClick={logoutUser}
+              className="p-1 text-slate-400 hover:text-rose-300 hover:bg-slate-800 rounded transition-colors ml-1 cursor-pointer"
+              title="Lock Workstation / Switch User"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
 
         {/* Live System Clock */}
         <div className="pl-2 border-l border-slate-800 text-xs font-mono font-medium text-slate-400 tabular-nums">

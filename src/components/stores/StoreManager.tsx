@@ -12,8 +12,11 @@ export const StoreManager: React.FC = () => {
     updateStore, 
     deleteStore,
     invoices,
-    products
+    products,
+    currentUser
   } = useApp();
+
+  const canManageStores = currentUser?.role === 'owner' || currentUser?.role === 'admin';
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [storeToEdit, setStoreToEdit] = useState<Store | null>(null);
@@ -88,13 +91,19 @@ export const StoreManager: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={handleOpenAdd}
-          className="flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-sm transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add New Store</span>
-        </button>
+        {canManageStores ? (
+          <button
+            onClick={handleOpenAdd}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-sm transition-colors cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add New Store</span>
+          </button>
+        ) : (
+          <span className="text-xs text-slate-400 bg-slate-800 border border-slate-700 px-3 py-1 rounded-lg">
+            Read-Only Branch Locations View
+          </span>
+        )}
       </div>
 
       {/* Grid of Stores */}
@@ -136,28 +145,30 @@ export const StoreManager: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => handleOpenEdit(st)}
-                        className="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-colors"
-                        title="Edit Store"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                      </button>
-                      {stores.length > 1 && (
+                    {canManageStores && (
+                      <div className="flex items-center gap-1">
                         <button
-                          onClick={() => {
-                            if (window.confirm(`Delete store "${st.name}"?`)) {
-                              deleteStore(st.id);
-                            }
-                          }}
-                          className="p-1 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded transition-colors"
-                          title="Delete Store"
+                          onClick={() => handleOpenEdit(st)}
+                          className="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-colors cursor-pointer"
+                          title="Edit Store"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Edit3 className="w-3.5 h-3.5" />
                         </button>
-                      )}
-                    </div>
+                        {stores.length > 1 && (
+                          <button
+                            onClick={() => {
+                              if (window.confirm(`Delete store "${st.name}"?`)) {
+                                deleteStore(st.id);
+                              }
+                            }}
+                            className="p-1 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded transition-colors cursor-pointer"
+                            title="Delete Store"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Store Details */}

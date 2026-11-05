@@ -2,17 +2,23 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { GLOBAL_CURRENCIES } from '../../utils/format';
 import { CurrencyConfig, Organization, Store } from '../../types';
+import { UserRole } from '../../types/auth';
 import { BijadexLogo } from '../brand/BijadexLogo';
 import { 
   Building2, 
   Store as StoreIcon, 
   Receipt, 
+  ShieldCheck,
   CheckCircle2, 
   Globe, 
   Sparkles,
   ArrowRight,
   ArrowLeft,
-  X
+  X,
+  UserPlus,
+  Key,
+  Lock,
+  Users
 } from 'lucide-react';
 
 export const OnboardingWizard: React.FC = () => {
@@ -21,12 +27,15 @@ export const OnboardingWizard: React.FC = () => {
     setIsOnboardingOpen, 
     organization, 
     stores, 
-    completeOnboarding 
+    completeOnboarding,
+    users,
+    updateUser,
+    addUser
   } = useApp();
 
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
 
-  // Form states
+  // Form states - Step 1
   const [name, setName] = useState(organization.name || '');
   const [businessType, setBusinessType] = useState<Organization['businessType']>(organization.businessType || 'Retail Store');
   const [country, setCountry] = useState(organization.country || 'United States');
@@ -38,7 +47,7 @@ export const OnboardingWizard: React.FC = () => {
   const [email, setEmail] = useState(organization.email || 'hello@bijasa.com');
   const [address, setAddress] = useState(organization.address || '');
 
-  // Primary store state
+  // Primary store state - Step 2
   const primaryStore = stores[0];
   const [storeName, setStoreName] = useState(primaryStore?.name || 'Main Retail Store');
   const [storeCode, setStoreCode] = useState(primaryStore?.code || 'MAIN-01');
@@ -46,10 +55,21 @@ export const OnboardingWizard: React.FC = () => {
   const [storeManager, setStoreManager] = useState(primaryStore?.manager || 'Store Manager');
   const [storeType, setStoreType] = useState<Store['type']>(primaryStore?.type || 'retail');
 
-  // Receipt & Billing
+  // Receipt & Billing - Step 3
   const [invoicePrefix, setInvoicePrefix] = useState(organization.invoicePrefix || 'BJX-2026-');
   const [receiptHeader, setReceiptHeader] = useState(organization.receiptHeader || 'BIJADEX RETAIL & SUPPLY');
   const [receiptFooter, setReceiptFooter] = useState(organization.receiptFooter || 'Thank you for shopping with us! Returns accepted within 14 days.');
+
+  // IAM Staff & Owner Access - Step 4
+  const ownerUser = users.find(u => u.role === 'owner') || users[0];
+  const [ownerName, setOwnerName] = useState(ownerUser?.name || 'Himanshu V. Patil');
+  const [ownerPin, setOwnerPin] = useState(ownerUser?.pin || '123456');
+
+  const [addInitialStaff, setAddInitialStaff] = useState<boolean>(true);
+  const [staffName, setStaffName] = useState('Sarah Jenkins');
+  const [staffEmail, setStaffEmail] = useState('sarah@bijasa.com');
+  const [staffRole, setStaffRole] = useState<UserRole>('cashier');
+  const [staffPin, setStaffPin] = useState('654321');
 
   if (!isOnboardingOpen) return null;
 
@@ -57,6 +77,28 @@ export const OnboardingWizard: React.FC = () => {
 
   const handleFinish = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // 1. Save updated owner PIN
+    if (ownerUser) {
+      updateUser(ownerUser.id, {
+        name: ownerName,
+        pin: ownerPin
+      });
+    }
+
+    // 2. Optionally add initial staff member
+    if (addInitialStaff && staffName.trim()) {
+      addUser({
+        name: staffName.trim(),
+        email: staffEmail.trim() || `${staffName.toLowerCase().replace(/\s+/g, '.')}@bijasa.com`,
+        role: staffRole,
+        pin: staffPin,
+        storeIds: [primaryStore?.id || 'store-01'],
+        isActive: true
+      });
+    }
+
+    // 3. Complete main organization setup
     completeOnboarding(
       {
         name,
@@ -94,18 +136,18 @@ export const OnboardingWizard: React.FC = () => {
               <h2 className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
                 Business & Organization Setup
                 <span className="text-[11px] font-mono font-normal text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/40">
-                  Step {step} of 3
+                  Step {step} of 4
                 </span>
               </h2>
               <p className="text-[11px] text-slate-400">
-                Configure company profile, global currency, and billing rules
+                Configure company profile, global currency, billing rules, & IAM staff access
               </p>
             </div>
           </div>
 
           <button
             onClick={() => setIsOnboardingOpen(false)}
-            className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+            className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
             title="Dismiss Setup"
           >
             <X className="w-5 h-5" />
@@ -113,36 +155,50 @@ export const OnboardingWizard: React.FC = () => {
         </div>
 
         {/* Step Progress Indicators */}
-        <div className="grid grid-cols-3 border-b border-slate-800 text-xs text-center font-medium bg-slate-950/40">
+        <div className="grid grid-cols-4 border-b border-slate-800 text-[11px] text-center font-medium bg-slate-950/40">
           <button
             type="button"
             onClick={() => setStep(1)}
-            className={`py-2.5 flex items-center justify-center gap-2 border-b-2 transition-colors ${
+            className={`py-2.5 flex items-center justify-center gap-1.5 border-b-2 transition-colors cursor-pointer ${
               step === 1 ? 'border-emerald-500 text-white font-semibold' : 'border-transparent text-slate-400'
             }`}
           >
             <Building2 className="w-3.5 h-3.5" />
-            <span>1. Organization & Currency</span>
+            <span className="hidden sm:inline">1. Organization</span>
+            <span className="sm:hidden">1. Org</span>
           </button>
           <button
             type="button"
             onClick={() => setStep(2)}
-            className={`py-2.5 flex items-center justify-center gap-2 border-b-2 transition-colors ${
+            className={`py-2.5 flex items-center justify-center gap-1.5 border-b-2 transition-colors cursor-pointer ${
               step === 2 ? 'border-emerald-500 text-white font-semibold' : 'border-transparent text-slate-400'
             }`}
           >
             <StoreIcon className="w-3.5 h-3.5" />
-            <span>2. Store Location</span>
+            <span className="hidden sm:inline">2. Store Location</span>
+            <span className="sm:hidden">2. Store</span>
           </button>
           <button
             type="button"
             onClick={() => setStep(3)}
-            className={`py-2.5 flex items-center justify-center gap-2 border-b-2 transition-colors ${
+            className={`py-2.5 flex items-center justify-center gap-1.5 border-b-2 transition-colors cursor-pointer ${
               step === 3 ? 'border-emerald-500 text-white font-semibold' : 'border-transparent text-slate-400'
             }`}
           >
             <Receipt className="w-3.5 h-3.5" />
-            <span>3. Billing & Tax Defaults</span>
+            <span className="hidden sm:inline">3. Billing & Tax</span>
+            <span className="sm:hidden">3. Tax</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setStep(4)}
+            className={`py-2.5 flex items-center justify-center gap-1.5 border-b-2 transition-colors cursor-pointer ${
+              step === 4 ? 'border-emerald-500 text-white font-semibold' : 'border-transparent text-slate-400'
+            }`}
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="hidden sm:inline">4. Owner PIN & Staff</span>
+            <span className="sm:hidden">4. Staff</span>
           </button>
         </div>
 
@@ -220,7 +276,7 @@ export const OnboardingWizard: React.FC = () => {
                         key={curr.code}
                         type="button"
                         onClick={() => setSelectedCurrencyCode(curr.code)}
-                        className={`p-2 rounded-lg border text-left flex items-center justify-between transition-colors ${
+                        className={`p-2 rounded-lg border text-left flex items-center justify-between transition-colors cursor-pointer ${
                           isSelected
                             ? 'bg-slate-800 border-emerald-500 text-white shadow-sm'
                             : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-850'
@@ -442,13 +498,157 @@ export const OnboardingWizard: React.FC = () => {
             </div>
           )}
 
+          {/* STEP 4: OWNER PIN & STAFF IAM ACCESS */}
+          {step === 4 && (
+            <div className="space-y-4 animate-in fade-in duration-150">
+              {/* IAM Overview Banner */}
+              <div className="p-3 bg-emerald-950/40 border border-emerald-800/60 rounded-lg flex items-start gap-3">
+                <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                <div className="text-xs space-y-1">
+                  <div className="font-semibold text-emerald-300">
+                    Identity & Access Management (IAM) Integration
+                  </div>
+                  <p className="text-slate-300 leading-relaxed text-[11px]">
+                    Bijadex enforces multi-user PIN authentication for POS cashier shifts. As Store Owner, configure your security PIN below. You can also add team members now or manage them anytime from the <strong className="text-emerald-400">Staff & RBAC</strong> tab in your sidebar.
+                  </p>
+                </div>
+              </div>
+
+              {/* Store Owner Credentials */}
+              <div className="p-3.5 bg-slate-950 border border-slate-800 rounded-lg space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
+                  <div className="flex items-center gap-2">
+                    <Key className="w-4 h-4 text-amber-400" />
+                    <span className="text-xs font-bold text-white">Store Owner Credentials (Super Admin)</span>
+                  </div>
+                  <span className="text-[10px] font-mono font-semibold bg-amber-950/60 text-amber-400 border border-amber-800/50 px-2 py-0.5 rounded">
+                    ROLE: OWNER
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-300 mb-1">
+                      Owner Account Name
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={ownerName}
+                      onChange={e => setOwnerName(e.target.value)}
+                      placeholder="e.g. Himanshu V. Patil"
+                      className="w-full bg-slate-900 border border-slate-700 text-slate-100 text-xs px-3 py-2 rounded-lg outline-none focus:border-emerald-500 font-medium"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-300 mb-1">
+                      Store Owner Security PIN (6 Digits) *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      maxLength={6}
+                      value={ownerPin}
+                      onChange={e => setOwnerPin(e.target.value.replace(/\D/g, ''))}
+                      placeholder="123456"
+                      className="w-full bg-slate-900 border border-slate-700 text-emerald-400 font-mono text-xs font-bold tracking-widest px-3 py-2 rounded-lg outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Initial Staff Member Setup Toggle */}
+              <div className="p-3.5 bg-slate-950 border border-slate-800 rounded-lg space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={addInitialStaff}
+                      onChange={e => setAddInitialStaff(e.target.checked)}
+                      className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 bg-slate-900 border-slate-700 cursor-pointer"
+                    />
+                    <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                      <UserPlus className="w-4 h-4 text-emerald-400" />
+                      Add First Staff Member / Cashier Now
+                    </span>
+                  </label>
+                  <span className="text-[10px] text-slate-400">Optional during setup</span>
+                </div>
+
+                {addInitialStaff && (
+                  <div className="pt-2 border-t border-slate-800/80 space-y-3 animate-in fade-in duration-150">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                          Staff Member Name
+                        </label>
+                        <input
+                          type="text"
+                          value={staffName}
+                          onChange={e => setStaffName(e.target.value)}
+                          placeholder="e.g. Sarah Jenkins"
+                          className="w-full bg-slate-900 border border-slate-700 text-slate-100 text-xs px-3 py-2 rounded-lg outline-none focus:border-emerald-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                          Staff Email Address
+                        </label>
+                        <input
+                          type="email"
+                          value={staffEmail}
+                          onChange={e => setStaffEmail(e.target.value)}
+                          placeholder="sarah@bijasa.com"
+                          className="w-full bg-slate-900 border border-slate-700 text-slate-100 text-xs px-3 py-2 rounded-lg outline-none focus:border-emerald-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                          Assigned Role & Permissions
+                        </label>
+                        <select
+                          value={staffRole}
+                          onChange={e => setStaffRole(e.target.value as UserRole)}
+                          className="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs px-3 py-2 rounded-lg outline-none focus:border-emerald-500"
+                        >
+                          <option value="cashier">Cashier (POS & Sales)</option>
+                          <option value="manager">Store Manager (POS + Reports + Stock)</option>
+                          <option value="admin">Administrator (Full Access)</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                          Shift Login PIN (6 Digits)
+                        </label>
+                        <input
+                          type="text"
+                          maxLength={6}
+                          value={staffPin}
+                          onChange={e => setStaffPin(e.target.value.replace(/\D/g, ''))}
+                          placeholder="654321"
+                          className="w-full bg-slate-900 border border-slate-700 text-emerald-400 font-mono text-xs font-bold tracking-widest px-3 py-2 rounded-lg outline-none focus:border-emerald-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Navigation Controls */}
           <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
             <div className="flex items-center gap-3">
               {step > 1 && (
                 <button
                   type="button"
-                  onClick={() => setStep(prev => (prev - 1) as 1 | 2)}
+                  onClick={() => setStep(prev => (prev - 1) as 1 | 2 | 3)}
                   className="flex items-center gap-1.5 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg transition-colors cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
@@ -477,11 +677,11 @@ export const OnboardingWizard: React.FC = () => {
               </div>
             </div>
 
-            {step < 3 ? (
+            {step < 4 ? (
               <button
                 type="button"
-                onClick={() => setStep(prev => (prev + 1) as 2 | 3)}
-                className="flex items-center gap-1.5 px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-sm transition-colors"
+                onClick={() => setStep(prev => (prev + 1) as 2 | 3 | 4)}
+                className="flex items-center gap-1.5 px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-sm transition-colors cursor-pointer"
               >
                 <span>Continue</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -489,7 +689,7 @@ export const OnboardingWizard: React.FC = () => {
             ) : (
               <button
                 type="submit"
-                className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-lg transition-colors"
+                className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-lg transition-colors cursor-pointer"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 <span>Launch Business Workstation</span>

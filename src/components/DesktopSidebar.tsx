@@ -1,6 +1,6 @@
-import React from 'react';
 import { useApp } from '../context/AppContext';
 import { NavigationTab } from '../types';
+import { hasTabAccess } from '../utils/rbac';
 import {
   ShoppingCart,
   Boxes,
@@ -39,7 +39,8 @@ export const DesktopSidebar: React.FC = () => {
     purchaseOrders,
     isOnline,
     syncQueue,
-    setIsSyncCenterOpen
+    setIsSyncCenterOpen,
+    currentUser
   } = useApp();
 
   const pendingSyncCount = syncQueue.filter(i => i.status === 'pending' || i.status === 'failed').length;
@@ -55,7 +56,7 @@ export const DesktopSidebar: React.FC = () => {
   const activeTransfers = stockTransfers.filter(t => t.status === 'in_transit').length;
   const pendingPOs = purchaseOrders.filter(p => p.status === 'ordered').length;
 
-  const navItems: NavItem[] = [
+  const allNavItems: NavItem[] = [
     {
       id: 'pos',
       label: 'Billing & POS',
@@ -119,6 +120,11 @@ export const DesktopSidebar: React.FC = () => {
       icon: Store,
     },
     {
+      id: 'staff',
+      label: 'Staff & RBAC',
+      icon: Users,
+    },
+    {
       id: 'labels',
       label: 'Barcode Studio',
       icon: Barcode,
@@ -129,6 +135,9 @@ export const DesktopSidebar: React.FC = () => {
       icon: Settings,
     },
   ];
+
+  // RBAC filter: only render navigation items authorized for user's role
+  const navItems = allNavItems.filter(item => hasTabAccess(currentUser?.role, item.id));
 
   return (
     <aside className="w-56 bg-slate-950/80 border-r border-slate-800 flex flex-col justify-between shrink-0 select-none overflow-y-auto">

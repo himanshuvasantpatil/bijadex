@@ -17,6 +17,9 @@ import {
   RegisterShift,
   CurrencyConfig
 } from '../types';
+import { UserProfile, DEFAULT_USERS } from '../types/auth';
+import { AuditLog, AuditCategory, AuditSeverity, DEFAULT_AUDIT_LOGS } from '../types/audit';
+
 import {
   INITIAL_PRODUCTS,
   INITIAL_CUSTOMERS,
@@ -168,6 +171,18 @@ interface AppContextType {
   storageStats: StorageStats;
   isSyncCenterOpen: boolean;
   setIsSyncCenterOpen: (open: boolean) => void;
+
+  // IAM & RBAC Access Management & Audit Logging
+  currentUser: UserProfile | null;
+  users: UserProfile[];
+  loginWithPin: (userId: string, pin: string) => boolean;
+  logoutUser: () => void;
+  addUser: (userData: Omit<UserProfile, 'id' | 'createdAt'>) => UserProfile;
+  updateUser: (id: string, userData: Partial<UserProfile>) => void;
+  deleteUser: (id: string) => void;
+  auditLogs: AuditLog[];
+  addAuditLog: (action: string, category: AuditCategory, details: string, severity?: AuditSeverity) => void;
+  clearAuditLogs: () => void;
 
   // System
   exportDatabase: () => void;
@@ -351,6 +366,147 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [scanFeedback, setScanFeedback] = useState<ScanFeedback | null>(null);
   const [selectedInvoiceForPrint, setSelectedInvoiceForPrint] = useState<Invoice | null>(null);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+
+  // IAM & RBAC Access Management State
+  const [users, setUsers] = useState<UserProfile[]>(() => {
+    try {
+      const stored = localStorage.getItem('bijadex_users_v1');
+      return stored ? JSON.parse(stored) : DEFAULT_USERS;
+    } catch {
+      return DEFAULT_USERS;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('bijadex_users_v1', JSON.stringify(users));
+    } catch { /* storage fallback */ }
+  }, [users]);
+
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
+    try {
+      const stored = localStorage.getItem('bijadex_current_user');
+      return stored ? JSON.parse(stored) : DEFAULT_USERS[0];
+    } catch {
+      return DEFAULT_USERS[0];
+    }
+  });
+
+  // Audit Logs State & Persistence
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>(() => {
+    try {
+      const stored = localStorage.getItem('bijadex_audit_logs_v1');
+      return stored ? JSON.parse(stored) : DEFAULT_AUDIT_LOGS;
+    } catch {
+      return DEFAULT_AUDIT_LOGS;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('bijadex_audit_logs_v1', JSON.stringify(auditLogs));
+    } catch { /* storage fallback */ }
+  }, [auditLogs]);
+
+  const addAuditLog = useCallback((
+    action: string,
+    category: AuditCategory,
+    details: string,
+    severity: AuditSeverity = 'info'
+  ) => {
+    const newLog: AuditLog = {
+      id: `log-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      timestamp: new Date().toISOString(),
+      userId: currentUser?.id || 'usr-1',
+      userName: currentUser?.name || 'Himanshu V. Patil',
+      userRole: currentUser?.role || 'owner',
+      action,
+      category,
+      details,
+      terminalId: 'POS-MAIN-01',
+      storeName: activeStore?.name || 'Main Retail Store',
+      severity
+    };
+    setAuditLogs(prev => [newLog, ...prev]);
+  }, [currentUser, activeStore]);
+
+  const clearAuditLogs = useCallback(() => {
+    setAuditLogs([]);
+  }, []);
+
+  const loginWithPin = useCallback((userId: string, pin: string): boolean => {
+    const user = users.find(u => u.id === userId);
+    if (user && user.pin === pin && user.isActive) {
+      setCurrentUser(user);
+      try {
+        localStorage.setItem('bijadex_current_user', JSON.stringify(user));
+      } catch { /* storage fallback */ }
+
+      // Log successful PIN authentication
+      const newLog: AuditLog = {
+        id: `log-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        timestamp: new Date().toISOString(),
+        userId: user.id,
+        userName: user.name,
+        userRole: user.role,
+        action: 'PIN_AUTH_SUCCESS',
+        category: 'auth',
+        details: `Authenticated shift login as ${user.name} (${user.role.toUpperCase()})`,
+        terminalId: 'POS-MAIN-01',
+        storeName: activeStore?.name || 'Main Retail Store',
+        severity: 'info'
+      };
+      setAuditLogs(prev => [newLog, ...prev]);
+      return true;
+    }
+    return false;
+  }, [users, activeStore]);
+
+  const logoutUser = useCallback(() => {
+    if (currentUser) {
+      const newLog: AuditLog = {
+        id: `log-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        timestamp: new Date().toISOString(),
+        userId: currentUser.id,
+        userName: currentUser.name,
+        userRole: currentUser.role,
+        action: 'PIN_LOCK_WORKSTATION',
+        category: 'auth',
+        details: `Workstation locked by ${currentUser.name}`,
+        terminalId: 'POS-MAIN-01',
+        storeName: activeStore?.name || 'Main Retail Store',
+        severity: 'info'
+      };
+      setAuditLogs(prev => [newLog, ...prev]);
+    }
+    setCurrentUser(null);
+    try {
+      localStorage.removeItem('bijadex_current_user');
+    } catch { /* storage fallback */ }
+  }, [currentUser, activeStore]);
+
+  const addUser = useCallback((userData: Omit<UserProfile, 'id' | 'createdAt'>): UserProfile => {
+    const newUser: UserProfile = {
+      ...userData,
+      id: `usr-${Date.now()}`,
+      createdAt: new Date().toISOString()
+    };
+    setUsers(prev => [newUser, ...prev]);
+    addAuditLog('STAFF_ADDED', 'staff', `Added new staff member: ${userData.name} (${userData.role.toUpperCase()})`, 'info');
+    return newUser;
+  }, [addAuditLog]);
+
+  const updateUser = useCallback((id: string, userData: Partial<UserProfile>) => {
+    setUsers(prev => prev.map(u => u.id === id ? { ...u, ...userData } : u));
+    setCurrentUser(prev => prev && prev.id === id ? { ...prev, ...userData } : prev);
+    addAuditLog('STAFF_UPDATED', 'staff', `Updated staff credentials/role for user ID ${id}`, 'info');
+  }, [addAuditLog]);
+
+  const deleteUser = useCallback((id: string) => {
+    const target = users.find(u => u.id === id);
+    setUsers(prev => prev.filter(u => u.id !== id));
+    addAuditLog('STAFF_DELETED', 'staff', `Revoked staff profile: ${target?.name || id} (${target?.role?.toUpperCase() || 'USER'})`, 'warning');
+  }, [users, addAuditLog]);
 
   // IndexedDB & Offline Sync States
   const [networkOnline, setNetworkOnline] = useState<boolean>(() => {
@@ -1591,6 +1747,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         storageStats,
         isSyncCenterOpen,
         setIsSyncCenterOpen,
+
+        // IAM & RBAC Access Management & Audit Logging
+        currentUser,
+        users,
+        loginWithPin,
+        logoutUser,
+        addUser,
+        updateUser,
+        deleteUser,
+        auditLogs,
+        addAuditLog,
+        clearAuditLogs,
 
         exportDatabase,
         importDatabase,

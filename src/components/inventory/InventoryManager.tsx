@@ -30,8 +30,11 @@ export const InventoryManager: React.FC = () => {
     getProductStock,
     isOnline,
     setIsSyncCenterOpen,
-    syncQueue
+    syncQueue,
+    currentUser
   } = useApp();
+
+  const canEditInventory = currentUser?.role === 'owner' || currentUser?.role === 'admin' || currentUser?.role === 'manager';
 
   // Search & Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -240,16 +243,22 @@ export const InventoryManager: React.FC = () => {
             <span>Export CSV</span>
           </button>
 
-          <button
-            onClick={() => {
-              setProductToEdit(null);
-              setIsProductModalOpen(true);
-            }}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-sm transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Product</span>
-          </button>
+          {canEditInventory ? (
+            <button
+              onClick={() => {
+                setProductToEdit(null);
+                setIsProductModalOpen(true);
+              }}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-sm transition-colors cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Product</span>
+            </button>
+          ) : (
+            <span className="text-[11px] font-mono text-amber-400 bg-amber-950/60 border border-amber-800/40 px-2.5 py-1 rounded-lg">
+              Read-Only Catalog Lookup
+            </span>
+          )}
         </div>
       </div>
 
@@ -380,47 +389,53 @@ export const InventoryManager: React.FC = () => {
                   {/* Actions */}
                   <td className="py-2.5 px-3 text-right">
                     <div className="flex items-center justify-end gap-1.5">
-                      <button
-                        onClick={() => {
-                          setProductToAdjust(p);
-                          setIsAdjustModalOpen(true);
-                        }}
-                        className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-medium rounded transition-colors"
-                        title="Adjust Stock (In/Out/Audit)"
-                      >
-                        Adjust
-                      </button>
+                      {canEditInventory && (
+                        <button
+                          onClick={() => {
+                            setProductToAdjust(p);
+                            setIsAdjustModalOpen(true);
+                          }}
+                          className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-medium rounded transition-colors cursor-pointer"
+                          title="Adjust Stock (In/Out/Audit)"
+                        >
+                          Adjust
+                        </button>
+                      )}
 
                       <button
                         onClick={() => addToCart(p, 1)}
-                        className="p-1 text-slate-400 hover:text-emerald-400 hover:bg-slate-800 rounded transition-colors"
+                        className="p-1 text-slate-400 hover:text-emerald-400 hover:bg-slate-800 rounded transition-colors cursor-pointer"
                         title="Add to Billing Cart"
                       >
                         <ShoppingCart className="w-3.5 h-3.5" />
                       </button>
 
-                      <button
-                        onClick={() => {
-                          setProductToEdit(p);
-                          setIsProductModalOpen(true);
-                        }}
-                        className="p-1 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded transition-colors"
-                        title="Edit Product Details"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                      </button>
+                      {canEditInventory && (
+                        <>
+                          <button
+                            onClick={() => {
+                              setProductToEdit(p);
+                              setIsProductModalOpen(true);
+                            }}
+                            className="p-1 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded transition-colors cursor-pointer"
+                            title="Edit Product Details"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
 
-                      <button
-                        onClick={() => {
-                          if (window.confirm(`Delete product "${p.name}"?`)) {
-                            deleteProduct(p.id);
-                          }
-                        }}
-                        className="p-1 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded transition-colors"
-                        title="Delete Product"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                          <button
+                            onClick={() => {
+                              if (window.confirm(`Delete product "${p.name}"?`)) {
+                                deleteProduct(p.id);
+                              }
+                            }}
+                            className="p-1 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded transition-colors cursor-pointer"
+                            title="Delete Product"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>

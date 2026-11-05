@@ -5,8 +5,10 @@ import { formatCurrency, formatDateTime } from '../../utils/format';
 import { Plus, Trash2, Wallet, X } from 'lucide-react';
 
 export const ExpenseManager: React.FC = () => {
-  const { expenses, addExpense, deleteExpense } = useApp();
+  const { expenses, addExpense, deleteExpense, currentUser } = useApp();
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const canManageExpenses = currentUser?.role === 'owner' || currentUser?.role === 'admin' || currentUser?.role === 'manager';
 
   const [formData, setFormData] = useState({
     category: 'Packaging & Shipping' as Expense['category'],
@@ -70,13 +72,15 @@ export const ExpenseManager: React.FC = () => {
             </div>
           </div>
 
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-sm transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Log Expense</span>
-          </button>
+          {canManageExpenses && (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-sm transition-colors cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Log Expense</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -118,16 +122,21 @@ export const ExpenseManager: React.FC = () => {
                   {formatCurrency(exp.amount)}
                 </td>
                 <td className="py-2.5 px-4 text-right">
-                  <button
-                    onClick={() => {
-                      if (window.confirm('Delete this expense entry?')) {
-                        deleteExpense(exp.id);
-                      }
-                    }}
-                    className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded transition-colors"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  {canManageExpenses ? (
+                    <button
+                      onClick={() => {
+                        if (window.confirm('Delete this expense entry?')) {
+                          deleteExpense(exp.id);
+                        }
+                      }}
+                      className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded transition-colors cursor-pointer"
+                      title="Delete Expense Entry"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  ) : (
+                    <span className="text-[10px] text-slate-500 font-mono">View Only</span>
+                  )}
                 </td>
               </tr>
             ))}

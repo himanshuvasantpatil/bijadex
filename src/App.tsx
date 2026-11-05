@@ -18,12 +18,16 @@ import { ScannerModal } from './components/ScannerModal';
 import { InvoicePrintModal } from './components/InvoicePrintModal';
 import { ShortcutsModal } from './components/ShortcutsModal';
 import { SyncCenterModal } from './components/sync/SyncCenterModal';
+import { LoginLockScreen } from './components/auth/LoginLockScreen';
 import { OnboardingWizard } from './components/onboarding/OnboardingWizard';
 import { StoreManager } from './components/stores/StoreManager';
+import { StaffManager } from './components/staff/StaffManager';
 import { StockTransferManager } from './components/transfers/StockTransferManager';
 import { PurchaseOrderManager } from './components/purchases/PurchaseOrderManager';
 import { RegisterShiftManager } from './components/shifts/RegisterShiftManager';
 import { SettingsManager } from './components/settings/SettingsManager';
+import { RBACAccessDenied } from './components/auth/RBACAccessDenied';
+import { hasTabAccess } from './utils/rbac';
 import { useHardwareScanner } from './utils/barcode';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
 
@@ -31,7 +35,8 @@ const DesktopAppContent: React.FC = () => {
   const { 
     activeTab, 
     handleBarcodeScan, 
-    scanFeedback 
+    scanFeedback,
+    currentUser
   } = useApp();
 
   // Listen for hardware USB / Bluetooth handheld barcode scanner guns globally
@@ -64,22 +69,30 @@ const DesktopAppContent: React.FC = () => {
 
         {/* Viewport Content */}
         <main className="flex-1 flex flex-col overflow-hidden relative">
-          {activeTab === 'pos' && <POSStation />}
-          {activeTab === 'inventory' && <InventoryManager />}
-          {activeTab === 'reports' && <FinancialReports />}
-          {activeTab === 'invoices' && <InvoiceHistory />}
-          {activeTab === 'transfers' && <StockTransferManager />}
-          {activeTab === 'purchases' && <PurchaseOrderManager />}
-          {activeTab === 'shifts' && <RegisterShiftManager />}
-          {activeTab === 'expenses' && <ExpenseManager />}
-          {activeTab === 'customers' && <CustomerManager />}
-          {activeTab === 'stores' && <StoreManager />}
-          {activeTab === 'labels' && <BarcodeLabelsModal />}
-          {activeTab === 'settings' && <SettingsManager />}
+          {!hasTabAccess(currentUser?.role, activeTab) ? (
+            <RBACAccessDenied tab={activeTab} />
+          ) : (
+            <>
+              {activeTab === 'pos' && <POSStation />}
+              {activeTab === 'inventory' && <InventoryManager />}
+              {activeTab === 'reports' && <FinancialReports />}
+              {activeTab === 'invoices' && <InvoiceHistory />}
+              {activeTab === 'transfers' && <StockTransferManager />}
+              {activeTab === 'purchases' && <PurchaseOrderManager />}
+              {activeTab === 'shifts' && <RegisterShiftManager />}
+              {activeTab === 'expenses' && <ExpenseManager />}
+              {activeTab === 'customers' && <CustomerManager />}
+              {activeTab === 'stores' && <StoreManager />}
+              {activeTab === 'staff' && <StaffManager />}
+              {activeTab === 'labels' && <BarcodeLabelsModal />}
+              {activeTab === 'settings' && <SettingsManager />}
+            </>
+          )}
         </main>
       </div>
 
       {/* Modals & Wizards */}
+      <LoginLockScreen />
       <OnboardingWizard />
       <ScannerModal />
       <InvoicePrintModal />

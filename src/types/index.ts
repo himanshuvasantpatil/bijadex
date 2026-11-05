@@ -224,4 +224,5 @@ export type NavigationTab =
   | 'customers' 
   | 'stores'
   | 'labels'
+  | 'staff'
   | 'settings';
