@@ -1,0 +1,6 @@
+{
+  "name": "OmniStock Desktop ERP & POS",
+  "description": "High-performance desktop inventory management, point-of-sale billing workstation, real-time camera and hardware barcode scanning, and automated financial accounting reporting.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
