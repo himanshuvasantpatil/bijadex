@@ -20,7 +20,9 @@ import {
   Zap,
   CheckCircle2,
   CornerDownLeft,
-  Keyboard
+  Keyboard,
+  ArrowLeft,
+  ShoppingCart
 } from 'lucide-react';
 
 export const POSStation: React.FC = () => {
@@ -46,6 +48,7 @@ export const POSStation: React.FC = () => {
   // Search & Catalog Filter State
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [mobilePosTab, setMobilePosTab] = useState<'catalog' | 'cart'>('catalog');
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   // Billing & Payment States
@@ -134,6 +137,7 @@ export const POSStation: React.FC = () => {
       setDiscountValue(0);
       setUseLoyaltyPoints(0);
       setNotes('');
+      setMobilePosTab('catalog');
     } catch (err) {
       console.error(err);
     } finally {
@@ -178,8 +182,8 @@ export const POSStation: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-slate-900 select-none">
       <div className="flex-1 flex overflow-hidden">
-        {/* Left: Product Catalog & Fast Barcode Lookup (65% width) */}
-        <div className="flex-1 flex flex-col border-r border-slate-800 min-w-0 bg-slate-950/40">
+        {/* Left: Product Catalog & Fast Barcode Lookup */}
+        <div className={`flex-1 flex-col border-r border-slate-800 min-w-0 bg-slate-950/40 ${mobilePosTab === 'catalog' ? 'flex' : 'hidden lg:flex'}`}>
           {/* Search & Scanner Header Bar */}
           <div className="p-4 border-b border-slate-800 bg-slate-900/90 flex flex-col gap-3">
             <div className="flex items-center gap-3">
@@ -221,7 +225,7 @@ export const POSStation: React.FC = () => {
                 Express Fast-Sellers:
               </span>
               <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-                {expressFastItems.map((prod, idx) => (
+                {expressFastItems.map((prod) => (
                   <button
                     key={prod.id}
                     type="button"
@@ -322,10 +326,39 @@ export const POSStation: React.FC = () => {
               </div>
             )}
           </div>
+
+          {/* Floating Mobile View Cart Trigger Bar */}
+          {cart.length > 0 && (
+            <div className="lg:hidden p-3 bg-slate-950 border-t border-slate-800 shrink-0">
+              <button
+                onClick={() => setMobilePosTab('cart')}
+                className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg flex items-center justify-between px-4 transition-all cursor-pointer active:scale-[0.99]"
+              >
+                <div className="flex items-center gap-2">
+                  <ShoppingCart className="w-4 h-4 text-white" />
+                  <span>View Sale Cart ({cart.reduce((sum, i) => sum + i.quantity, 0)} items)</span>
+                </div>
+                <span className="font-mono text-xs font-bold bg-emerald-950 px-2.5 py-1 rounded-lg text-emerald-300 border border-emerald-700/60">
+                  {formatCurrency(grandTotal)} →
+                </span>
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Right: POS Billing Cart & Checkout Terminal (35% width, min 380px) */}
-        <div className="w-[420px] bg-slate-900 flex flex-col shrink-0 border-l border-slate-800 shadow-xl">
+        {/* Right: POS Billing Cart & Checkout Terminal */}
+        <div className={`w-full lg:w-[420px] bg-slate-900 flex-col shrink-0 border-l border-slate-800 shadow-xl ${mobilePosTab === 'cart' ? 'flex' : 'hidden lg:flex'}`}>
+          {/* Mobile Back Button Bar */}
+          <div className="lg:hidden p-2.5 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+            <button
+              onClick={() => setMobilePosTab('catalog')}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 text-slate-200 text-xs font-semibold rounded-lg hover:bg-slate-700 transition-colors cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4 text-emerald-400" />
+              <span>Back to Item Catalog</span>
+            </button>
+            <span className="text-xs font-bold text-white font-mono">{formatCurrency(grandTotal)}</span>
+          </div>
           {/* Cart Header */}
           <div className="p-3.5 border-b border-slate-800 bg-slate-950/70 flex items-center justify-between">
             <div className="flex items-center gap-2">

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { BijadexLogo } from './brand/BijadexLogo';
+import { PWAInstallButton } from './pwa/PWAInstallButton';
 import { 
   Scan, 
   Volume2, 
@@ -163,6 +164,8 @@ export const DesktopHeader: React.FC = () => {
 
       {/* Zone 3: Hardware & Global System Actions */}
       <div className="flex items-center gap-2 shrink-0">
+        <PWAInstallButton />
+
         {/* Local-First IndexedDB Engine & Sync Center Pill */}
         <button
           onClick={() => setIsSyncCenterOpen(true)}

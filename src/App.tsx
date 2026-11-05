@@ -27,6 +27,8 @@ import { PurchaseOrderManager } from './components/purchases/PurchaseOrderManage
 import { RegisterShiftManager } from './components/shifts/RegisterShiftManager';
 import { SettingsManager } from './components/settings/SettingsManager';
 import { RBACAccessDenied } from './components/auth/RBACAccessDenied';
+import { MobileNavBar } from './components/mobile/MobileNavBar';
+import { MobileHandheldView } from './components/mobile/MobileHandheldView';
 import { hasTabAccess } from './utils/rbac';
 import { useHardwareScanner } from './utils/barcode';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
@@ -93,13 +95,22 @@ const DesktopAppContent: React.FC = () => {
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-slate-900 text-slate-100 font-sans">
-      {/* Desktop App Titlebar & Navigation */}
-      <DesktopHeader />
+      {/* Mobile Top Navigation Header (< 768px) */}
+      <div className="md:hidden">
+        <MobileNavBar />
+      </div>
+
+      {/* Desktop App Header (>= 768px) */}
+      <div className="hidden md:block">
+        <DesktopHeader />
+      </div>
 
       {/* Main Workspace Frame */}
       <div className="flex flex-1 overflow-hidden relative">
-        {/* Left Desktop Sidebar */}
-        <DesktopSidebar />
+        {/* Left Desktop Sidebar (>= 768px) */}
+        <div className="hidden md:flex shrink-0">
+          <DesktopSidebar />
+        </div>
 
         {/* Viewport Content */}
         <main className="flex-1 flex flex-col overflow-hidden relative">
@@ -109,6 +120,7 @@ const DesktopAppContent: React.FC = () => {
             <>
               {activeTab === 'pos' && <POSStation />}
               {activeTab === 'inventory' && <InventoryManager />}
+              {activeTab === 'handheld' && <MobileHandheldView />}
               {activeTab === 'reports' && <FinancialReports />}
               {activeTab === 'invoices' && <InvoiceHistory />}
               {activeTab === 'transfers' && <StockTransferManager />}

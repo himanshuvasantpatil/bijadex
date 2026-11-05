@@ -19,6 +19,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     allowedTabs: [
       'pos',
       'inventory',
+      'handheld',
       'reports',
       'invoices',
       'transfers',
@@ -45,6 +46,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     allowedTabs: [
       'pos',
       'inventory',
+      'handheld',
       'reports',
       'invoices',
       'transfers',
@@ -71,6 +73,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     allowedTabs: [
       'pos',
       'inventory',
+      'handheld',
       'reports',
       'invoices',
       'transfers',
@@ -98,6 +101,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
       'shifts',
       'customers',
       'inventory', // Read-only catalog lookup
+      'handheld',
       'labels'
     ],
     canManageStaff: false,

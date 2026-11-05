@@ -215,6 +215,7 @@ export interface RegisterShift {
 export type NavigationTab = 
   | 'pos' 
   | 'inventory' 
+  | 'handheld'
   | 'reports' 
   | 'invoices' 
   | 'transfers'

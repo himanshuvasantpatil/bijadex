@@ -10,6 +10,7 @@ interface Props {
 const TAB_NAMES: Record<NavigationTab, string> = {
   pos: 'Billing & POS',
   inventory: 'Inventory Control',
+  handheld: 'Storeroom Handheld Mode',
   reports: 'Financial Reports',
   invoices: 'Sales Receipts',
   transfers: 'Stock Transfers',

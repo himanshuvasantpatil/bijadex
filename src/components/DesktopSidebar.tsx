@@ -4,6 +4,7 @@ import { hasTabAccess } from '../utils/rbac';
 import {
   ShoppingCart,
   Boxes,
+  Smartphone,
   BarChart3,
   Receipt,
   Wallet,
@@ -72,6 +73,11 @@ export const DesktopSidebar: React.FC = () => {
       hotkey: 'F2',
       badge: lowStockCount > 0 ? lowStockCount : undefined,
       badgeColor: 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+    },
+    {
+      id: 'handheld',
+      label: 'Storeroom Handheld',
+      icon: Smartphone,
     },
     {
       id: 'reports',
