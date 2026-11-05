@@ -14,7 +14,9 @@ import {
   PackagePlus,
   Coins,
   Settings,
-  AlertTriangle
+  AlertTriangle,
+  Database,
+  WifiOff
 } from 'lucide-react';
 
 interface NavItem {
@@ -34,8 +36,13 @@ export const DesktopSidebar: React.FC = () => {
     products, 
     activeStore, 
     stockTransfers, 
-    purchaseOrders 
+    purchaseOrders,
+    isOnline,
+    syncQueue,
+    setIsSyncCenterOpen
   } = useApp();
+
+  const pendingSyncCount = syncQueue.filter(i => i.status === 'pending' || i.status === 'failed').length;
 
   const lowStockCount = products.filter(p => {
     const stockAtStore = p.storeStock && p.storeStock[activeStore.id] !== undefined
@@ -193,6 +200,31 @@ export const DesktopSidebar: React.FC = () => {
             </span>
           </div>
         )}
+
+        {/* IndexedDB Local Engine & Sync Widget */}
+        <button
+          onClick={() => setIsSyncCenterOpen(true)}
+          className={`mt-2 w-full flex items-center justify-between p-1.5 rounded border text-[10px] transition-colors cursor-pointer ${
+            !isOnline
+              ? 'bg-amber-950/40 border-amber-800/50 text-amber-300 hover:bg-amber-950/60'
+              : pendingSyncCount > 0
+              ? 'bg-blue-950/40 border-blue-800/50 text-blue-300 hover:bg-blue-950/60'
+              : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+          }`}
+          title="IndexedDB Local Engine · Click to view Sync Center"
+        >
+          <div className="flex items-center gap-1.5 truncate">
+            {!isOnline ? (
+              <WifiOff className="w-3 h-3 text-amber-400 shrink-0" />
+            ) : (
+              <Database className="w-3 h-3 text-emerald-400 shrink-0" />
+            )}
+            <span className="truncate">{!isOnline ? 'Offline Mode' : 'IndexedDB Local'}</span>
+          </div>
+          <span className="font-mono text-[9px] font-bold px-1.5 py-0.2 rounded bg-slate-800 shrink-0">
+            {pendingSyncCount > 0 ? `${pendingSyncCount} queued` : 'Synced'}
+          </span>
+        </button>
 
         <div className="mt-2.5 pt-2 border-t border-slate-900 space-y-1">
           <div className="flex items-center justify-between text-[10px]">

@@ -130,5 +130,32 @@ export const soundManager = {
     } catch {
       // silent
     }
+  },
+
+  // Offline Sync Success Chime
+  playSyncChime() {
+    if (isMuted) return;
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+
+      const playTone = (freq: number, delay: number, duration: number) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + delay);
+        gain.gain.setValueAtTime(0.12, ctx.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + delay);
+        osc.stop(ctx.currentTime + delay + duration);
+      };
+
+      playTone(587.33, 0, 0.15); // D5
+      playTone(880.00, 0.09, 0.3); // A5
+    } catch {
+      // silent
+    }
   }
 };

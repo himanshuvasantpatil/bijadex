@@ -17,6 +17,7 @@ import { BarcodeLabelsModal } from './components/BarcodeLabelsModal';
 import { ScannerModal } from './components/ScannerModal';
 import { InvoicePrintModal } from './components/InvoicePrintModal';
 import { ShortcutsModal } from './components/ShortcutsModal';
+import { SyncCenterModal } from './components/sync/SyncCenterModal';
 import { OnboardingWizard } from './components/onboarding/OnboardingWizard';
 import { StoreManager } from './components/stores/StoreManager';
 import { StockTransferManager } from './components/transfers/StockTransferManager';
@@ -83,6 +84,7 @@ const DesktopAppContent: React.FC = () => {
       <ScannerModal />
       <InvoicePrintModal />
       <ShortcutsModal />
+      <SyncCenterModal />
 
       {/* Floating Barcode Scan Feedback Toast */}
       {visibleToast && (

@@ -11,7 +11,10 @@ import {
   Store,
   Building2,
   ChevronDown,
-  Globe
+  Globe,
+  Wifi,
+  WifiOff,
+  RefreshCw
 } from 'lucide-react';
 
 export const DesktopHeader: React.FC = () => {
@@ -27,11 +30,17 @@ export const DesktopHeader: React.FC = () => {
     stores,
     activeStoreId,
     setActiveStoreId,
-    setIsOnboardingOpen
+    setIsOnboardingOpen,
+    isOnline,
+    isSyncing,
+    syncQueue,
+    setIsSyncCenterOpen
   } = useApp();
 
   const [currentTime, setCurrentTime] = useState<string>('');
   const [isStoreMenuOpen, setIsStoreMenuOpen] = useState(false);
+
+  const pendingSyncCount = syncQueue.filter(i => i.status === 'pending' || i.status === 'failed').length;
 
   useEffect(() => {
     const updateTime = () => {
@@ -150,6 +159,46 @@ export const DesktopHeader: React.FC = () => {
 
       {/* Zone 3: Hardware & Global System Actions */}
       <div className="flex items-center gap-2 shrink-0">
+        {/* Local-First IndexedDB Engine & Sync Center Pill */}
+        <button
+          onClick={() => setIsSyncCenterOpen(true)}
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-mono font-medium rounded-md border transition-colors cursor-pointer shrink-0 ${
+            !isOnline
+              ? 'bg-amber-950/70 text-amber-300 border-amber-700/70 hover:bg-amber-900/70'
+              : isSyncing
+              ? 'bg-cyan-950/70 text-cyan-300 border-cyan-700/70 hover:bg-cyan-900/70'
+              : pendingSyncCount > 0
+              ? 'bg-amber-950/50 text-amber-300 border-amber-800/50 hover:bg-amber-900/50'
+              : 'bg-slate-950 text-emerald-400 border-emerald-900/50 hover:bg-slate-800'
+          }`}
+          title="IndexedDB Local-First Engine · Click to open Sync Center"
+        >
+          {!isOnline ? (
+            <>
+              <WifiOff className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden sm:inline font-semibold">Offline</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500 text-slate-950 font-bold">
+                {pendingSyncCount} Q
+              </span>
+            </>
+          ) : isSyncing ? (
+            <>
+              <RefreshCw className="w-3.5 h-3.5 text-cyan-400 animate-spin" />
+              <span className="hidden sm:inline font-semibold">Syncing</span>
+            </>
+          ) : (
+            <>
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="hidden sm:inline font-semibold">IDB Synced</span>
+              {pendingSyncCount > 0 && (
+                <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500 text-slate-950 font-bold">
+                  {pendingSyncCount}
+                </span>
+              )}
+            </>
+          )}
+        </button>
+
         {/* Real-time Barcode Scanner Launcher */}
         <button
           onClick={() => openScanner('pos')}

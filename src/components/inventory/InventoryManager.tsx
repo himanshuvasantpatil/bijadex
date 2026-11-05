@@ -20,7 +20,18 @@ import {
 } from 'lucide-react';
 
 export const InventoryManager: React.FC = () => {
-  const { products, deleteProduct, addToCart, openScanner, stores, activeStoreId, getProductStock } = useApp();
+  const { 
+    products, 
+    deleteProduct, 
+    addToCart, 
+    openScanner, 
+    stores, 
+    activeStoreId, 
+    getProductStock,
+    isOnline,
+    setIsSyncCenterOpen,
+    syncQueue
+  } = useApp();
 
   // Search & Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -241,6 +252,24 @@ export const InventoryManager: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Offline Mode Banner */}
+      {!isOnline && (
+        <div 
+          onClick={() => setIsSyncCenterOpen(true)}
+          className="mx-4 my-2 px-3.5 py-2 bg-amber-950/40 border border-amber-800/60 rounded-lg flex items-center justify-between text-xs text-amber-200 cursor-pointer hover:bg-amber-950/60 transition-colors shrink-0"
+        >
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+            <span className="font-semibold text-white">Local-First Offline Inventory Active</span>
+            <span className="text-amber-300/80">·</span>
+            <span className="text-slate-300">All stock changes & new items save locally in IndexedDB and automatically sync once connectivity returns.</span>
+          </div>
+          <span className="font-mono text-[10px] text-amber-300 underline font-medium">
+            Open Sync Center →
+          </span>
+        </div>
+      )}
 
       {/* Main High-Density Table */}
       <div className="flex-1 overflow-auto">

@@ -32,6 +32,19 @@ import {
 } from '../data/initialData';
 import { soundManager } from '../utils/audio';
 import { setActiveCurrency } from '../utils/format';
+import {
+  persistAllToIndexedDB,
+  loadAllFromIndexedDB,
+  enqueueSyncMutation,
+  getAllSyncQueue,
+  getPendingSyncQueue,
+  updateSyncItemStatus,
+  clearSyncedItems,
+  getStorageStats,
+  setMetaItem,
+  getMetaItem
+} from '../services/indexedDB';
+import { SyncQueueItem, StorageStats } from '../types/sync';
 
 interface ScanFeedback {
   id: string;
@@ -142,6 +155,19 @@ interface AppContextType {
   setSelectedInvoiceForPrint: (inv: Invoice | null) => void;
   isShortcutsOpen: boolean;
   setIsShortcutsOpen: (open: boolean) => void;
+
+  // IndexedDB Local-First Engine & Sync Center
+  isOnline: boolean;
+  isSimulatedOffline: boolean;
+  toggleSimulateOffline: () => void;
+  isSyncing: boolean;
+  syncPendingNow: () => Promise<void>;
+  syncQueue: SyncQueueItem[];
+  clearSyncedQueue: () => Promise<void>;
+  lastSyncedAt: string | null;
+  storageStats: StorageStats;
+  isSyncCenterOpen: boolean;
+  setIsSyncCenterOpen: (open: boolean) => void;
 
   // System
   exportDatabase: () => void;
@@ -326,72 +352,206 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [selectedInvoiceForPrint, setSelectedInvoiceForPrint] = useState<Invoice | null>(null);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
 
+  // IndexedDB & Offline Sync States
+  const [networkOnline, setNetworkOnline] = useState<boolean>(() => {
+    return typeof navigator !== 'undefined' ? navigator.onLine : true;
+  });
+  const [isSimulatedOffline, setIsSimulatedOffline] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('bijadex_simulated_offline') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const isOnline = networkOnline && !isSimulatedOffline;
+
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
+  const [syncQueue, setSyncQueue] = useState<SyncQueueItem[]>([]);
+  const [storageStats, setStorageStats] = useState<StorageStats>({
+    usedBytes: 184320,
+    quotaBytes: 1073741824,
+    percentage: 0.01,
+    productCount: INITIAL_PRODUCTS.length,
+    invoiceCount: INITIAL_INVOICES.length,
+    queueCount: 0
+  });
+  const [isSyncCenterOpen, setIsSyncCenterOpen] = useState<boolean>(false);
+
   // Initialize audio
   useEffect(() => {
     soundManager.initFromStorage();
     setIsSoundMuted(soundManager.getMuted());
   }, []);
 
-  // Save to LocalStorage
+  // Listen to browser network connectivity changes
   useEffect(() => {
+    const handleOnline = () => setNetworkOnline(true);
+    const handleOffline = () => setNetworkOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Toggle simulated offline mode
+  const toggleSimulateOffline = useCallback(() => {
+    setIsSimulatedOffline(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('bijadex_simulated_offline', next ? 'true' : 'false');
+      } catch { /* storage fallback */ }
+      return next;
+    });
+  }, []);
+
+  // IndexedDB Initial Boot Hydration
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      try {
+        const idbData = await loadAllFromIndexedDB();
+        if (idbData && isMounted) {
+          if (idbData.products.length > 0) setProducts(idbData.products);
+          if (idbData.stores.length > 0) setStores(idbData.stores);
+          if (idbData.organization) setOrganization(idbData.organization);
+          if (idbData.customers.length > 0) setCustomers(idbData.customers);
+          if (idbData.invoices.length > 0) setInvoices(idbData.invoices);
+          if (idbData.expenses.length > 0) setExpenses(idbData.expenses);
+          if (idbData.stockMovements.length > 0) setStockMovements(idbData.stockMovements);
+          if (idbData.stockTransfers.length > 0) setStockTransfers(idbData.stockTransfers);
+          if (idbData.suppliers.length > 0) setSuppliers(idbData.suppliers);
+          if (idbData.purchaseOrders.length > 0) setPurchaseOrders(idbData.purchaseOrders);
+          if (idbData.activeShift) setActiveShift(idbData.activeShift);
+        } else if (isMounted) {
+          // First time, seed initial data into IndexedDB
+          await persistAllToIndexedDB({
+            products,
+            stores,
+            organization,
+            customers,
+            invoices,
+            expenses,
+            stockMovements,
+            stockTransfers,
+            suppliers,
+            purchaseOrders,
+            activeShift
+          });
+        }
+
+        const queue = await getAllSyncQueue();
+        if (isMounted) setSyncQueue(queue);
+
+        const lastSync = await getMetaItem<string>('lastSyncedAt');
+        if (isMounted && lastSync) setLastSyncedAt(lastSync);
+
+        const stats = await getStorageStats();
+        if (isMounted) setStorageStats(stats);
+      } catch (err) {
+        console.warn('[IndexedDB] Boot initialization warning:', err);
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Real-time synchronization worker
+  const syncPendingNow = useCallback(async () => {
+    if (isSyncing) return;
+    const pending = await getPendingSyncQueue();
+    if (pending.length === 0) return;
+
+    setIsSyncing(true);
+
+    try {
+      // Mark as syncing in progress
+      for (const item of pending) {
+        await updateSyncItemStatus(item.id, 'syncing');
+      }
+      setSyncQueue(await getAllSyncQueue());
+
+      // Realistic cloud round-trip delay
+      await new Promise(resolve => setTimeout(resolve, 750));
+
+      // Mark all as successfully synced
+      const now = new Date().toISOString();
+      for (const item of pending) {
+        await updateSyncItemStatus(item.id, 'synced');
+      }
+
+      await setMetaItem('lastSyncedAt', now);
+      setLastSyncedAt(now);
+
+      const refreshed = await getAllSyncQueue();
+      setSyncQueue(refreshed);
+
+      const stats = await getStorageStats();
+      setStorageStats(stats);
+
+      soundManager.playSyncChime();
+    } catch (err) {
+      console.warn('[SyncEngine] Error during synchronization:', err);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [isSyncing]);
+
+  // Automatic sync on network restoration
+  useEffect(() => {
+    if (isOnline) {
+      getPendingSyncQueue().then(pending => {
+        if (pending.length > 0) {
+          syncPendingNow();
+        }
+      });
+    }
+  }, [isOnline, syncPendingNow]);
+
+  // Clear completed synced items
+  const clearSyncedQueue = useCallback(async () => {
+    await clearSyncedItems();
+    setSyncQueue(await getAllSyncQueue());
+    setStorageStats(await getStorageStats());
+  }, []);
+
+  // Save to IndexedDB & fallback LocalStorage
+  useEffect(() => {
+    persistAllToIndexedDB({
+      products,
+      stores,
+      organization,
+      customers,
+      invoices,
+      expenses,
+      stockMovements,
+      stockTransfers,
+      suppliers,
+      purchaseOrders,
+      activeShift
+    }).then(() => {
+      getStorageStats().then(setStorageStats);
+    });
+
     try {
       localStorage.setItem(STORAGE_KEYS.ORGANIZATION, JSON.stringify(organization));
-    } catch { /* storage fallback */ }
-  }, [organization]);
-
-  useEffect(() => {
-    try {
       localStorage.setItem(STORAGE_KEYS.STORES, JSON.stringify(stores));
-    } catch { /* storage fallback */ }
-  }, [stores]);
-
-  useEffect(() => {
-    try {
       localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
-    } catch { /* storage fallback */ }
-  }, [products]);
-
-  useEffect(() => {
-    try {
       localStorage.setItem(STORAGE_KEYS.CUSTOMERS, JSON.stringify(customers));
-    } catch { /* storage fallback */ }
-  }, [customers]);
-
-  useEffect(() => {
-    try {
       localStorage.setItem(STORAGE_KEYS.INVOICES, JSON.stringify(invoices));
-    } catch { /* storage fallback */ }
-  }, [invoices]);
-
-  useEffect(() => {
-    try {
       localStorage.setItem(STORAGE_KEYS.EXPENSES, JSON.stringify(expenses));
-    } catch { /* storage fallback */ }
-  }, [expenses]);
-
-  useEffect(() => {
-    try {
       localStorage.setItem(STORAGE_KEYS.STOCK_MOVEMENTS, JSON.stringify(stockMovements));
-    } catch { /* storage fallback */ }
-  }, [stockMovements]);
-
-  useEffect(() => {
-    try {
       localStorage.setItem(STORAGE_KEYS.STOCK_TRANSFERS, JSON.stringify(stockTransfers));
-    } catch { /* storage fallback */ }
-  }, [stockTransfers]);
-
-  useEffect(() => {
-    try {
       localStorage.setItem(STORAGE_KEYS.PURCHASE_ORDERS, JSON.stringify(purchaseOrders));
-    } catch { /* storage fallback */ }
-  }, [purchaseOrders]);
-
-  useEffect(() => {
-    try {
       localStorage.setItem(STORAGE_KEYS.ACTIVE_SHIFT, JSON.stringify(activeShift));
     } catch { /* storage fallback */ }
-  }, [activeShift]);
+  }, [products, stores, organization, customers, invoices, expenses, stockMovements, stockTransfers, suppliers, purchaseOrders, activeShift]);
 
   const toggleSoundMuted = useCallback(() => {
     const next = !isSoundMuted;
@@ -794,8 +954,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCart([]);
     setSelectedInvoiceForPrint(newInvoice);
 
+    // Enqueue offline/local-first sync mutation
+    enqueueSyncMutation({
+      action: 'CREATE_INVOICE',
+      entity: 'invoice',
+      entityId: newInvoice.id,
+      description: `Billed sale ${invoiceNumber} (${details.paymentMethod.toUpperCase()}) at ${activeStore.name}`,
+      payload: newInvoice
+    }).then(async () => {
+      setSyncQueue(await getAllSyncQueue());
+      setStorageStats(await getStorageStats());
+      if (isOnline) syncPendingNow();
+    });
+
     return newInvoice;
-  }, [cart, invoices.length, selectedCustomer, activeStore, organization, activeShift]);
+  }, [cart, invoices.length, selectedCustomer, activeStore, organization, activeShift, isOnline, syncPendingNow]);
 
   // Inventory Stock Adjustments
   const adjustStock = useCallback((
@@ -806,6 +979,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     storeId?: string
   ) => {
     const targetStoreId = storeId || activeStoreId;
+    const targetStore = stores.find(s => s.id === targetStoreId) || activeStore;
+    const targetProd = products.find(p => p.id === productId);
 
     setProducts(prev =>
       prev.map(p => {
@@ -857,7 +1032,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         };
       })
     );
-  }, [activeStoreId]);
+
+    // Enqueue sync mutation in IndexedDB
+    enqueueSyncMutation({
+      action: 'UPDATE_STOCK',
+      entity: 'product',
+      entityId: productId,
+      description: `Stock ${type.toUpperCase()} (${adjustmentQty > 0 ? '+' : ''}${adjustmentQty}) for ${targetProd?.name || productId} at ${targetStore.name}`,
+      payload: { productId, adjustmentQty, type, reason, storeId: targetStoreId }
+    }).then(async () => {
+      setSyncQueue(await getAllSyncQueue());
+      setStorageStats(await getStorageStats());
+      if (isOnline) syncPendingNow();
+    });
+  }, [activeStoreId, stores, activeStore, products, isOnline, syncPendingNow]);
 
   // Product CRUD
   const addProduct = useCallback((productData: Omit<Product, 'id' | 'updatedAt'>): Product => {
@@ -893,18 +1081,57 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ]);
     }
 
+    // Enqueue sync mutation
+    enqueueSyncMutation({
+      action: 'ADD_PRODUCT',
+      entity: 'product',
+      entityId: newProduct.id,
+      description: `Created product ${newProduct.name} [${newProduct.sku}]`,
+      payload: newProduct
+    }).then(async () => {
+      setSyncQueue(await getAllSyncQueue());
+      setStorageStats(await getStorageStats());
+      if (isOnline) syncPendingNow();
+    });
+
     return newProduct;
-  }, [stores, activeStoreId]);
+  }, [stores, activeStoreId, isOnline, syncPendingNow]);
 
   const updateProduct = useCallback((id: string, productData: Partial<Product>) => {
+    const target = products.find(p => p.id === id);
     setProducts(prev =>
       prev.map(p => (p.id === id ? { ...p, ...productData, updatedAt: new Date().toISOString() } : p))
     );
-  }, []);
+
+    enqueueSyncMutation({
+      action: 'UPDATE_PRODUCT',
+      entity: 'product',
+      entityId: id,
+      description: `Updated product ${target?.name || id}`,
+      payload: { id, updates: productData }
+    }).then(async () => {
+      setSyncQueue(await getAllSyncQueue());
+      setStorageStats(await getStorageStats());
+      if (isOnline) syncPendingNow();
+    });
+  }, [products, isOnline, syncPendingNow]);
 
   const deleteProduct = useCallback((id: string) => {
+    const target = products.find(p => p.id === id);
     setProducts(prev => prev.filter(p => p.id !== id));
-  }, []);
+
+    enqueueSyncMutation({
+      action: 'DELETE_PRODUCT',
+      entity: 'product',
+      entityId: id,
+      description: `Deleted product ${target?.name || id}`,
+      payload: { id }
+    }).then(async () => {
+      setSyncQueue(await getAllSyncQueue());
+      setStorageStats(await getStorageStats());
+      if (isOnline) syncPendingNow();
+    });
+  }, [products, isOnline, syncPendingNow]);
 
   // Inter-Store Stock Transfers
   const createStockTransfer = useCallback((data: {
@@ -1197,7 +1424,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         };
       })
     );
-  }, []);
+
+    enqueueSyncMutation({
+      action: 'REFUND_INVOICE',
+      entity: 'invoice',
+      entityId: invoiceId,
+      description: `Refunded invoice ${invoiceId} (Reason: ${reason})`,
+      payload: { invoiceId, reason }
+    }).then(async () => {
+      setSyncQueue(await getAllSyncQueue());
+      setStorageStats(await getStorageStats());
+      if (isOnline) syncPendingNow();
+    });
+  }, [isOnline, syncPendingNow]);
 
   // Database Backup / Reset
   const exportDatabase = useCallback(() => {
@@ -1339,6 +1578,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setSelectedInvoiceForPrint,
         isShortcutsOpen,
         setIsShortcutsOpen,
+
+        // IndexedDB Local-First Engine & Sync Center
+        isOnline,
+        isSimulatedOffline,
+        toggleSimulateOffline,
+        isSyncing,
+        syncPendingNow,
+        syncQueue,
+        clearSyncedQueue,
+        lastSyncedAt,
+        storageStats,
+        isSyncCenterOpen,
+        setIsSyncCenterOpen,
 
         exportDatabase,
         importDatabase,
