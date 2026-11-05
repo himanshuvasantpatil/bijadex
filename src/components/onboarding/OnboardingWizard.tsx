@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { GLOBAL_CURRENCIES } from '../../utils/format';
 import { CurrencyConfig, Organization, Store } from '../../types';
+import { BijadexLogo } from '../brand/BijadexLogo';
 import { 
   Building2, 
   Store as StoreIcon, 
@@ -34,7 +35,7 @@ export const OnboardingWizard: React.FC = () => {
   const [taxName, setTaxName] = useState(organization.taxName || 'Sales Tax');
   const [defaultTaxRate, setDefaultTaxRate] = useState(organization.defaultTaxRate || 10);
   const [phone, setPhone] = useState(organization.phone || '');
-  const [email, setEmail] = useState(organization.email || '');
+  const [email, setEmail] = useState(organization.email || 'hello@bijasa.com');
   const [address, setAddress] = useState(organization.address || '');
 
   // Primary store state
@@ -46,8 +47,8 @@ export const OnboardingWizard: React.FC = () => {
   const [storeType, setStoreType] = useState<Store['type']>(primaryStore?.type || 'retail');
 
   // Receipt & Billing
-  const [invoicePrefix, setInvoicePrefix] = useState(organization.invoicePrefix || 'INV-2026-');
-  const [receiptHeader, setReceiptHeader] = useState(organization.receiptHeader || 'OMNISTOCK ENTERPRISE STORE');
+  const [invoicePrefix, setInvoicePrefix] = useState(organization.invoicePrefix || 'BJX-2026-');
+  const [receiptHeader, setReceiptHeader] = useState(organization.receiptHeader || 'BIJADEX RETAIL & SUPPLY');
   const [receiptFooter, setReceiptFooter] = useState(organization.receiptFooter || 'Thank you for shopping with us! Returns accepted within 14 days.');
 
   if (!isOnboardingOpen) return null;
@@ -87,19 +88,17 @@ export const OnboardingWizard: React.FC = () => {
       <div className="relative w-full max-w-2xl bg-slate-900 border border-slate-700/80 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Modal Top Banner */}
         <div className="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white font-bold text-xs tracking-wider shadow">
-              OS
-            </div>
-            <div>
+          <div className="flex items-center gap-4">
+            <BijadexLogo size="md" showByline={true} />
+            <div className="pl-3 border-l border-slate-800">
               <h2 className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
-                Business & Organization Setup Wizard
+                Business & Organization Setup
                 <span className="text-[11px] font-mono font-normal text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/40">
                   Step {step} of 3
                 </span>
               </h2>
               <p className="text-[11px] text-slate-400">
-                Configure your multi-store company profile, global currency, and billing rules
+                Configure company profile, global currency, and billing rules
               </p>
             </div>
           </div>
@@ -276,7 +275,7 @@ export const OnboardingWizard: React.FC = () => {
                     type="email"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
-                    placeholder="accounts@company.com"
+                    placeholder="hello@bijasa.com"
                     className="w-full bg-slate-950 border border-slate-700 text-slate-100 text-xs px-3 py-2 rounded-lg outline-none focus:border-emerald-500"
                   />
                   <input
@@ -423,7 +422,7 @@ export const OnboardingWizard: React.FC = () => {
                   type="text"
                   value={receiptHeader}
                   onChange={e => setReceiptHeader(e.target.value)}
-                  placeholder="e.g. OMNISTOCK ENTERPRISE STORE"
+                  placeholder="e.g. BIJADEX RETAIL & SUPPLY"
                   className="w-full bg-slate-950 border border-slate-700 text-slate-100 text-xs px-3 py-2 rounded-lg outline-none focus:border-emerald-500"
                 />
               </div>
@@ -445,18 +444,38 @@ export const OnboardingWizard: React.FC = () => {
 
           {/* Navigation Controls */}
           <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
-            {step > 1 ? (
-              <button
-                type="button"
-                onClick={() => setStep(prev => (prev - 1) as 1 | 2)}
-                className="flex items-center gap-1.5 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg transition-colors"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Back</span>
-              </button>
-            ) : (
-              <div />
-            )}
+            <div className="flex items-center gap-3">
+              {step > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setStep(prev => (prev - 1) as 1 | 2)}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg transition-colors cursor-pointer"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Back</span>
+                </button>
+              )}
+              <div className="hidden sm:flex items-center gap-2 text-[11px] text-slate-500 font-mono">
+                <span>Platform:</span>
+                <a
+                  href="https://bijasa.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-emerald-400 hover:text-emerald-300 hover:underline cursor-pointer"
+                  title="Visit bijasa.com"
+                >
+                  bijasa.com
+                </a>
+                <span>·</span>
+                <a
+                  href="mailto:hello@bijasa.com"
+                  className="text-slate-400 hover:text-emerald-300 hover:underline cursor-pointer"
+                  title="Contact hello@bijasa.com"
+                >
+                  hello@bijasa.com
+                </a>
+              </div>
+            </div>
 
             {step < 3 ? (
               <button

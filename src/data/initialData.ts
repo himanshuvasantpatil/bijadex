@@ -54,7 +54,7 @@ export const INITIAL_STORES: Store[] = [
 
 export const INITIAL_ORGANIZATION: Organization = {
   id: 'org-default',
-  name: 'OmniStock Global Retail & Distribution',
+  name: 'Bijadex Retail & Supply',
   businessType: 'Electronics & Gadgets',
   country: 'United States',
   currency: DEFAULT_CURRENCY,
@@ -62,12 +62,12 @@ export const INITIAL_ORGANIZATION: Organization = {
   taxName: 'Sales Tax',
   defaultTaxRate: 10,
   phone: '+1 (800) 555-0199',
-  email: 'ops@omnistock.global',
-  website: 'https://omnistock.global',
+  email: 'hello@bijasa.com',
+  website: 'https://bijasa.com',
   address: '100 Technology Plaza, San Francisco, CA 94105',
-  invoicePrefix: 'INV-2026-',
-  receiptHeader: 'OMNISTOCK ENTERPRISE STORE',
-  receiptFooter: 'Thank you for shopping with us! Returns accepted within 14 days with original receipt.',
+  invoicePrefix: 'BJX-2026-',
+  receiptHeader: 'BIJADEX ENTERPRISE WORKSTATION',
+  receiptFooter: 'Thank you for your business! Powered by Bijadex · A Bijasa Software Platform (bijasa.com).',
   isSetupComplete: true,
   loyaltyPointsRate: 0.1, // 1 point per $10
   loyaltyRedemptionRate: 0.50, // 1 point = $0.50 discount
@@ -502,7 +502,7 @@ function generateInitialInvoices(): Invoice[] {
 
     invoices.push({
       id: `inv-${invCount}`,
-      invoiceNumber: `INV-2026-${invCount.toString().padStart(4, '0')}`,
+      invoiceNumber: `BJX-2026-${invCount.toString().padStart(4, '0')}`,
       date: invDate,
       storeId: store.id,
       storeName: store.name,

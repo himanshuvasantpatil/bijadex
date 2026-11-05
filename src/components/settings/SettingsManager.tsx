@@ -12,7 +12,10 @@ import {
   RotateCcw, 
   Check, 
   Upload,
-  CheckCircle2
+  CheckCircle2,
+  Mail,
+  ExternalLink,
+  ShieldCheck
 } from 'lucide-react';
 
 export const SettingsManager: React.FC = () => {
@@ -199,6 +202,41 @@ export const SettingsManager: React.FC = () => {
                 />
               </div>
             </div>
+
+            <div className="grid grid-cols-2 gap-4 pt-2">
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Business Phone Number</label>
+                <input
+                  type="text"
+                  value={phone}
+                  onChange={e => setPhone(e.target.value)}
+                  placeholder="+1 (800) 555-0199"
+                  className="w-full bg-slate-900 border border-slate-700 text-white text-xs px-3 py-2 rounded-lg outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Business Contact Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="hello@bijasa.com"
+                  className="w-full bg-slate-900 border border-slate-700 text-white text-xs px-3 py-2 rounded-lg outline-none focus:border-emerald-500"
+                />
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <label className="block text-xs font-medium text-slate-300 mb-1">Corporate HQ / Physical Address</label>
+              <input
+                type="text"
+                value={address}
+                onChange={e => setAddress(e.target.value)}
+                placeholder="100 Technology Plaza, San Francisco, CA"
+                className="w-full bg-slate-900 border border-slate-700 text-white text-xs px-3 py-2 rounded-lg outline-none focus:border-emerald-500"
+              />
+            </div>
           </div>
 
           {/* Section 2: Billing & Receipt Configuration */}
@@ -330,6 +368,62 @@ export const SettingsManager: React.FC = () => {
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span>Reset to Factory Demo</span>
               </button>
+            </div>
+          </div>
+
+          {/* Section 5: Bijasa Platform & Enterprise Support */}
+          <div className="bg-slate-950/80 rounded-xl border border-slate-800 p-5 space-y-3">
+            <div className="flex items-center gap-2 pb-2 border-b border-slate-800 text-xs font-bold text-white uppercase tracking-wider">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <span>Platform Developer & Technical Support</span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              <div className="p-3.5 bg-slate-900 rounded-lg border border-slate-800 space-y-2">
+                <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                  Official Website
+                </div>
+                <div className="text-white font-medium">
+                  Developed & Maintained by <strong className="text-emerald-400">Bijasa</strong>
+                </div>
+                <div className="pt-1">
+                  <a
+                    href="https://bijasa.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 font-mono underline underline-offset-2 transition-colors cursor-pointer"
+                    title="Open bijasa.com in new tab"
+                  >
+                    <span>https://bijasa.com</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  Access software updates, enterprise deployment guides, and cloud sync services.
+                </p>
+              </div>
+
+              <div className="p-3.5 bg-slate-900 rounded-lg border border-slate-800 space-y-2">
+                <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                  Direct Support & Business Inquiries
+                </div>
+                <div className="text-white font-medium">
+                  Dedicated Enterprise Support Desk
+                </div>
+                <div className="pt-1">
+                  <a
+                    href="mailto:hello@bijasa.com"
+                    className="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 font-mono underline underline-offset-2 transition-colors cursor-pointer"
+                    title="Send email to hello@bijasa.com"
+                  >
+                    <span>hello@bijasa.com</span>
+                    <Mail className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  Contact our engineering team for custom hardware integrations, tax adaptations, or multi-location setup.
+                </p>
+              </div>
             </div>
           </div>
 

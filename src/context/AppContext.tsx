@@ -152,19 +152,19 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | null>(null);
 
 const STORAGE_KEYS = {
-  ORGANIZATION: 'omnistock_org_v2',
-  STORES: 'omnistock_stores_v2',
-  ACTIVE_STORE: 'omnistock_active_store_v2',
-  PRODUCTS: 'omnistock_products_v2',
-  CUSTOMERS: 'omnistock_customers_v2',
-  INVOICES: 'omnistock_invoices_v2',
-  EXPENSES: 'omnistock_expenses_v2',
-  STOCK_MOVEMENTS: 'omnistock_movements_v2',
-  STOCK_TRANSFERS: 'omnistock_transfers_v2',
-  SUPPLIERS: 'omnistock_suppliers_v2',
-  PURCHASE_ORDERS: 'omnistock_pos_v2',
-  ACTIVE_SHIFT: 'omnistock_shift_v2',
-  FIRST_RUN: 'omnistock_setup_done'
+  ORGANIZATION: 'bijadex_org_v1',
+  STORES: 'bijadex_stores_v1',
+  ACTIVE_STORE: 'bijadex_active_store_v1',
+  PRODUCTS: 'bijadex_products_v1',
+  CUSTOMERS: 'bijadex_customers_v1',
+  INVOICES: 'bijadex_invoices_v1',
+  EXPENSES: 'bijadex_expenses_v1',
+  STOCK_MOVEMENTS: 'bijadex_movements_v1',
+  STOCK_TRANSFERS: 'bijadex_transfers_v1',
+  SUPPLIERS: 'bijadex_suppliers_v1',
+  PURCHASE_ORDERS: 'bijadex_pos_v1',
+  ACTIVE_SHIFT: 'bijadex_shift_v1',
+  FIRST_RUN: 'bijadex_setup_done'
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -1202,7 +1202,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Database Backup / Reset
   const exportDatabase = useCallback(() => {
     const payload = {
-      appName: 'OmniStock Desktop ERP & POS',
+      appName: 'Bijadex Desktop ERP & POS by Bijasa',
       exportedAt: new Date().toISOString(),
       organization,
       stores,
@@ -1221,7 +1221,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `omnistock-enterprise-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `bijadex-enterprise-backup-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
   }, [organization, stores, activeStoreId, products, customers, invoices, expenses, stockMovements, stockTransfers, suppliers, purchaseOrders, activeShift]);

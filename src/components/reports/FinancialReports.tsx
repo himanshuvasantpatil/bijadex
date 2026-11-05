@@ -192,7 +192,7 @@ export const FinancialReports: React.FC = () => {
   // Export report to CSV
   const handleExportCSV = () => {
     const lines = [
-      `OMNISTOCK ERP - FINANCIAL REPORT`,
+      `BIJADEX ERP - FINANCIAL REPORT`,
       `Reporting Period: ${periodLabel}`,
       `Generated At: ${new Date().toISOString()}`,
       ``,

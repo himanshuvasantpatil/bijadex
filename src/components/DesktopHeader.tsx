@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
+import { BijadexLogo } from './brand/BijadexLogo';
 import { 
   Scan, 
   Volume2, 
@@ -67,20 +68,19 @@ export const DesktopHeader: React.FC = () => {
   };
 
   return (
-    <header className="flex items-center justify-between gap-6 px-4 py-2 bg-slate-900 border-b border-slate-800 text-slate-200 select-none shrink-0 z-20">
-      {/* Zone 1: Organization & Multi-Store Switcher */}
-      <div className="flex items-center gap-3 shrink-0">
+    <header className="flex items-center justify-between gap-4 px-4 py-2 bg-slate-900 border-b border-slate-800 text-slate-200 select-none shrink-0 z-20">
+      {/* Zone 1: Bijadex Brand & Organization & Multi-Store Switcher */}
+      <div className="flex items-center gap-3.5 shrink-0">
         <div 
           onClick={() => setIsOnboardingOpen(true)}
-          className="flex items-center gap-2 cursor-pointer group"
-          title="Organization Settings"
+          className="flex items-center gap-3 cursor-pointer group pr-3 border-r border-slate-800"
+          title="Bijadex ERP by bijasa · Click to edit organization profile"
         >
-          <div className="w-7 h-7 rounded-lg bg-emerald-600 group-hover:bg-emerald-500 transition-colors flex items-center justify-center font-bold text-white text-xs tracking-wider shadow-sm">
-            OS
-          </div>
-          <div className="flex flex-col">
-            <span className="text-xs font-bold tracking-tight text-white group-hover:text-emerald-300 transition-colors whitespace-nowrap truncate max-w-[160px]">
-              {organization.name || 'OmniStock ERP'}
+          <BijadexLogo size="sm" showByline={true} />
+
+          <div className="hidden xl:flex flex-col pl-3 border-l border-slate-800">
+            <span className="text-xs font-bold tracking-tight text-white group-hover:text-emerald-300 transition-colors whitespace-nowrap truncate max-w-[150px]">
+              {organization.name || 'Bijadex Retail'}
             </span>
             <span className="text-[10px] text-slate-400 font-mono">
               {organization.currency?.code || 'USD'} ({organization.currency?.symbol?.trim() || '$'})
@@ -207,6 +207,27 @@ export const DesktopHeader: React.FC = () => {
         {/* Live System Clock */}
         <div className="pl-2 border-l border-slate-800 text-xs font-mono font-medium text-slate-400 tabular-nums">
           {currentTime || '00:00:00'}
+        </div>
+
+        {/* Bijasa Enterprise Links */}
+        <div className="hidden xl:flex items-center gap-2 pl-2.5 border-l border-slate-800 text-[11px] font-mono">
+          <a
+            href="https://bijasa.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-emerald-400 hover:text-emerald-300 hover:underline transition-colors cursor-pointer"
+            title="Visit official website: bijasa.com"
+          >
+            bijasa.com
+          </a>
+          <span className="text-slate-600">·</span>
+          <a
+            href="mailto:hello@bijasa.com"
+            className="text-slate-400 hover:text-emerald-300 hover:underline transition-colors cursor-pointer"
+            title="Send email to hello@bijasa.com"
+          >
+            hello@bijasa.com
+          </a>
         </div>
       </div>
     </header>

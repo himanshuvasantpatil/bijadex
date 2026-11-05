@@ -25,7 +25,7 @@ export const soundManager = {
     isMuted = muted;
     if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem('omnistock_audio_muted', muted ? 'true' : 'false');
+        localStorage.setItem('bijadex_audio_muted', muted ? 'true' : 'false');
       } catch {
         // ignore
       }
@@ -35,7 +35,7 @@ export const soundManager = {
   initFromStorage() {
     if (typeof window !== 'undefined') {
       try {
-        const stored = localStorage.getItem('omnistock_audio_muted');
+        const stored = localStorage.getItem('bijadex_audio_muted');
         if (stored === 'true') {
           isMuted = true;
         }

@@ -51,10 +51,31 @@ export const ShortcutsModal: React.FC = () => {
           ))}
         </div>
 
-        <div className="p-3 bg-slate-950 border-t border-slate-800 text-center">
+        <div className="p-3.5 bg-slate-950 border-t border-slate-800 flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2 text-[11px] text-slate-400">
+            <span className="font-medium text-slate-300">Bijasa Support:</span>
+            <a
+              href="https://bijasa.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono text-emerald-400 hover:text-emerald-300 hover:underline transition-colors cursor-pointer"
+              title="Official Website"
+            >
+              bijasa.com
+            </a>
+            <span className="text-slate-600">·</span>
+            <a
+              href="mailto:hello@bijasa.com"
+              className="font-mono text-slate-400 hover:text-emerald-300 hover:underline transition-colors cursor-pointer"
+              title="Support Email"
+            >
+              hello@bijasa.com
+            </a>
+          </div>
+
           <button
             onClick={() => setIsShortcutsOpen(false)}
-            className="px-5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg transition-colors"
+            className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
           >
             Got it
           </button>

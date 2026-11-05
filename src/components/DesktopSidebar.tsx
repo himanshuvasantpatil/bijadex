@@ -193,6 +193,31 @@ export const DesktopSidebar: React.FC = () => {
             </span>
           </div>
         )}
+
+        <div className="mt-2.5 pt-2 border-t border-slate-900 space-y-1">
+          <div className="flex items-center justify-between text-[10px]">
+            <span className="font-medium text-slate-400">Bijadex ERP</span>
+            <a
+              href="https://bijasa.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono text-[9px] text-emerald-400 hover:text-emerald-300 hover:underline transition-colors cursor-pointer"
+              title="Visit official website: bijasa.com"
+            >
+              bijasa.com
+            </a>
+          </div>
+          <div className="flex items-center justify-between text-[9px] text-slate-500">
+            <span>Support:</span>
+            <a
+              href="mailto:hello@bijasa.com"
+              className="text-slate-400 hover:text-emerald-300 hover:underline transition-colors font-mono cursor-pointer"
+              title="Send email to hello@bijasa.com"
+            >
+              hello@bijasa.com
+            </a>
+          </div>
+        </div>
       </div>
     </aside>
   );

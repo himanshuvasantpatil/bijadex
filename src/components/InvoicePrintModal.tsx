@@ -207,6 +207,15 @@ Status: ${inv.status.toUpperCase()}
                   <div className="text-[10px] text-slate-600 font-medium">
                     {organization.receiptFooter}
                   </div>
+                  <div className="text-[9px] text-slate-500 font-mono pt-0.5">
+                    <a href="https://bijasa.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-slate-800">
+                      bijasa.com
+                    </a>
+                    {' · '}
+                    <a href="mailto:hello@bijasa.com" className="underline hover:text-slate-800">
+                      hello@bijasa.com
+                    </a>
+                  </div>
                   <div className="text-[10px] font-semibold pt-1">*** THANK YOU FOR YOUR BUSINESS ***</div>
                 </div>
               </div>
@@ -218,7 +227,16 @@ Status: ${inv.status.toUpperCase()}
                     <h1 className="text-xl font-bold tracking-tight text-slate-900">{organization.name.toUpperCase()}</h1>
                     <p className="text-slate-600 font-semibold text-[11px]">{inv.storeName || organization.name}</p>
                     <p className="text-slate-500 text-[11px]">{organization.address || 'Corporate Headquarters'}</p>
-                    <p className="text-slate-500 text-[11px]">Tel: {organization.phone} · {organization.taxName || 'Tax ID'}: {organization.taxId}</p>
+                    <p className="text-slate-500 text-[11px]">
+                      Tel: {organization.phone} · {organization.taxName || 'Tax ID'}: {organization.taxId} ·{' '}
+                      <a href="mailto:hello@bijasa.com" className="text-slate-700 hover:text-emerald-600 underline font-mono">
+                        hello@bijasa.com
+                      </a>{' '}
+                      ·{' '}
+                      <a href="https://bijasa.com" target="_blank" rel="noopener noreferrer" className="text-slate-700 hover:text-emerald-600 underline font-mono">
+                        bijasa.com
+                      </a>
+                    </p>
                   </div>
                   <div className="text-right">
                     <span className="inline-block px-2.5 py-0.5 bg-slate-900 text-white font-bold text-xs uppercase tracking-wider rounded">
@@ -322,7 +340,16 @@ Status: ${inv.status.toUpperCase()}
                 <div className="pt-6 border-t border-slate-200 flex justify-between items-center text-[10px] text-slate-500">
                   <div>
                     <p>Terms: Goods once sold can be returned within 14 days with original receipt.</p>
-                    <p>Computer generated tax invoice. No signature required.</p>
+                    <p className="mt-0.5">
+                      Computer generated tax invoice · Platform Developer:{' '}
+                      <a href="https://bijasa.com" target="_blank" rel="noopener noreferrer" className="font-semibold underline hover:text-slate-800">
+                        bijasa.com
+                      </a>
+                      {' · Support: '}
+                      <a href="mailto:hello@bijasa.com" className="font-mono underline hover:text-slate-800">
+                        hello@bijasa.com
+                      </a>
+                    </p>
                   </div>
                   <BarcodeDisplay
                     value={inv.invoiceNumber}
