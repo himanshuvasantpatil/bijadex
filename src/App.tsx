@@ -34,10 +34,44 @@ import { CheckCircle2, AlertCircle } from 'lucide-react';
 const DesktopAppContent: React.FC = () => {
   const { 
     activeTab, 
+    setActiveTab,
     handleBarcodeScan, 
     scanFeedback,
-    currentUser
+    currentUser,
+    openScanner,
+    isShortcutsOpen,
+    setIsShortcutsOpen
   } = useApp();
+
+  // Global F1 - F5 and ? Hotkeys Engine for 10/10 Speed
+  useEffect(() => {
+    const handleGlobalHotkeys = (e: KeyboardEvent) => {
+      const isInputActive = ['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName);
+
+      if (e.key === 'F1') {
+        e.preventDefault();
+        setActiveTab('pos');
+      } else if (e.key === 'F2') {
+        e.preventDefault();
+        setActiveTab('inventory');
+      } else if (e.key === 'F3') {
+        e.preventDefault();
+        setActiveTab('reports');
+      } else if (e.key === 'F4') {
+        e.preventDefault();
+        openScanner('pos');
+      } else if (e.key === 'F5') {
+        e.preventDefault();
+        setActiveTab('invoices');
+      } else if (e.key === '?' && !isInputActive) {
+        e.preventDefault();
+        setIsShortcutsOpen(!isShortcutsOpen);
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalHotkeys);
+    return () => window.removeEventListener('keydown', handleGlobalHotkeys);
+  }, [setActiveTab, openScanner, isShortcutsOpen, setIsShortcutsOpen]);
 
   // Listen for hardware USB / Bluetooth handheld barcode scanner guns globally
   useHardwareScanner((scannedCode) => {
